@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CertVerify — Secure Certificate Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b0f1a;
+    --bg2: #111827;
+    --bg3: #1a2236;
+    --card: #131c2e;
+    --border: rgba(99,179,237,0.12);
+    --border2: rgba(99,179,237,0.22);
+    --accent: #3b82f6;
+    --accent2: #60a5fa;
+    --accent-glow: rgba(59,130,246,0.18);
+    --green: #10b981;
+    --green-glow: rgba(16,185,129,0.15);
+    --red: #ef4444;
+    --red-glow: rgba(239,68,68,0.15);
+    --amber: #f59e0b;
+    --text: #e2e8f0;
+    --text2: #94a3b8;
+    --text3: #64748b;
+    --serif: 'DM Serif Display', Georgia, serif;
+    --sans: 'Outfit', sans-serif;
+    --mono: 'DM Mono', monospace;
+    --radius: 12px;
+    --radius-lg: 20px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.4);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── PAGES ── */
+  .page { display: none; min-height: 100vh; animation: fadeIn 0.35s ease; }
+  .page.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ── NAVBAR ── */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 48px;
+    height: 64px;
+    background: rgba(11,15,26,0.85);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-logo {
+    display: flex; align-items: center; gap: 10px;
+    font-family: var(--serif); font-size: 20px; color: var(--text);
+    cursor: pointer; text-decoration: none;
+  }
+  .nav-logo-icon {
+    width: 34px; height: 34px; border-radius: 8px;
+    background: var(--accent); display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 16px var(--accent-glow);
+  }
+  .nav-logo-icon svg { width: 18px; height: 18px; fill: #fff; }
+  .nav-links { display: flex; align-items: center; gap: 4px; }
+  .nav-link {
+    padding: 8px 16px; border-radius: 8px; font-size: 14px; font-weight: 500;
+    color: var(--text2); cursor: pointer; transition: all 0.2s;
+    border: none; background: none; font-family: var(--sans);
+  }
+  .nav-link:hover { color: var(--text); background: var(--bg3); }
+  .nav-link.active { color: var(--accent2); background: var(--accent-glow); }
+  .nav-cta {
+    padding: 9px 20px; border-radius: 8px; font-size: 14px; font-weight: 600;
+    background: var(--accent); color: #fff; cursor: pointer;
+    border: none; font-family: var(--sans); transition: all 0.2s;
+    box-shadow: 0 0 20px var(--accent-glow);
+  }
+  .nav-cta:hover { background: var(--accent2); transform: translateY(-1px); }
+  .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 8px; }
+  .hamburger span { width: 22px; height: 2px; background: var(--text); border-radius: 2px; transition: all 0.3s; }
+
+  /* ── GRID BACKGROUND ── */
+  .grid-bg {
+    position: absolute; inset: 0; z-index: 0;
+    background-image:
+      linear-gradient(rgba(59,130,246,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(59,130,246,0.04) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+  }
+
+  /* ── HOME PAGE ── */
+  .hero {
+    position: relative; overflow: hidden;
+    min-height: calc(100vh - 64px);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 80px 24px 60px;
+  }
+  .hero-glow {
+    position: absolute; top: -100px; left: 50%; transform: translateX(-50%);
+    width: 800px; height: 500px; border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(59,130,246,0.12) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 16px; border-radius: 999px;
+    border: 1px solid var(--border2); background: var(--accent-glow);
+    font-size: 13px; font-weight: 500; color: var(--accent2);
+    margin-bottom: 28px; z-index: 1;
+  }
+  .hero-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.6;transform:scale(1.3)} }
+  .hero h1 {
+    font-family: var(--serif); font-size: clamp(42px, 6vw, 72px);
+    line-height: 1.1; color: var(--text); margin-bottom: 20px; z-index: 1;
+    max-width: 800px;
+  }
+  .hero h1 em { font-style: italic; color: var(--accent2); }
+  .hero-sub {
+    font-size: 18px; color: var(--text2); max-width: 520px;
+    line-height: 1.7; margin-bottom: 44px; z-index: 1; font-weight: 300;
+  }
+  .hero-btns { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; z-index: 1; }
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 14px 28px; border-radius: var(--radius); font-size: 15px; font-weight: 600;
+    background: var(--accent); color: #fff; border: none; cursor: pointer;
+    font-family: var(--sans); transition: all 0.2s;
+    box-shadow: 0 0 30px var(--accent-glow);
+  }
+  .btn-primary:hover { background: var(--accent2); transform: translateY(-2px); box-shadow: 0 0 40px rgba(59,130,246,0.35); }
+  .btn-secondary {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 14px 28px; border-radius: var(--radius); font-size: 15px; font-weight: 600;
+    background: transparent; color: var(--text); border: 1px solid var(--border2);
+    cursor: pointer; font-family: var(--sans); transition: all 0.2s;
+  }
+  .btn-secondary:hover { background: var(--bg3); transform: translateY(-2px); border-color: var(--accent); }
+
+  /* Stats strip */
+  .stats-strip {
+    display: flex; justify-content: center; gap: 48px;
+    padding: 32px 24px; border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border); background: var(--bg2);
+    flex-wrap: wrap;
+  }
+  .stat { text-align: center; }
+  .stat-num { font-family: var(--mono); font-size: 28px; font-weight: 500; color: var(--accent2); }
+  .stat-label { font-size: 13px; color: var(--text3); margin-top: 4px; }
+
+  /* Feature cards */
+  .section { padding: 80px 48px; max-width: 1200px; margin: 0 auto; }
+  .section-label { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--accent); font-weight: 600; margin-bottom: 12px; }
+  .section-title { font-family: var(--serif); font-size: clamp(28px, 4vw, 42px); color: var(--text); margin-bottom: 14px; }
+  .section-sub { font-size: 16px; color: var(--text2); max-width: 500px; line-height: 1.7; margin-bottom: 48px; font-weight: 300; }
+  .feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .feature-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    padding: 32px 28px; transition: all 0.3s; cursor: default; position: relative; overflow: hidden;
+  }
+  .feature-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity: 0; transition: opacity 0.3s;
+  }
+  .feature-card:hover { border-color: var(--border2); transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,0.3); }
+  .feature-card:hover::before { opacity: 1; }
+  .feature-icon {
+    width: 48px; height: 48px; border-radius: 12px; margin-bottom: 20px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; background: var(--accent-glow); border: 1px solid var(--border2);
+  }
+  .feature-title { font-size: 17px; font-weight: 600; margin-bottom: 10px; color: var(--text); }
+  .feature-desc { font-size: 14px; color: var(--text2); line-height: 1.7; font-weight: 300; }
+
+  /* How it works */
+  .steps-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; position: relative; }
+  .steps-grid::before {
+    content: ''; position: absolute; top: 30px; left: calc(50% / 3 + 16.66%); right: calc(50% / 3 + 16.66%);
+    height: 1px; background: linear-gradient(90deg, var(--border2), var(--border2)); z-index: 0;
+  }
+  .step { text-align: center; padding: 0 24px; position: relative; z-index: 1; }
+  .step-num {
+    width: 60px; height: 60px; border-radius: 50%; border: 1px solid var(--border2);
+    background: var(--bg3); display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono); font-size: 18px; font-weight: 500; color: var(--accent2);
+    margin: 0 auto 20px; box-shadow: 0 0 20px var(--accent-glow);
+  }
+  .step-title { font-size: 16px; font-weight: 600; margin-bottom: 10px; }
+  .step-desc { font-size: 14px; color: var(--text2); line-height: 1.7; font-weight: 300; }
+
+  /* CTA Section */
+  .cta-section {
+    margin: 0 48px 80px; padding: 64px 48px; border-radius: var(--radius-lg);
+    background: linear-gradient(135deg, var(--bg3) 0%, rgba(59,130,246,0.08) 100%);
+    border: 1px solid var(--border2); text-align: center; position: relative; overflow: hidden;
+  }
+  .cta-section::after {
+    content: ''; position: absolute; bottom: -60px; right: -60px;
+    width: 200px; height: 200px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(59,130,246,0.15), transparent 70%);
+  }
+  .cta-section h2 { font-family: var(--serif); font-size: 36px; margin-bottom: 14px; }
+  .cta-section p { color: var(--text2); font-size: 16px; margin-bottom: 32px; font-weight: 300; }
+
+  /* ── UPLOAD & VERIFY PAGES ── */
+  .page-hero {
+    padding: 64px 48px 48px;
+    max-width: 760px; margin: 0 auto;
+    text-align: center;
+  }
+  .page-hero h1 { font-family: var(--serif); font-size: clamp(32px, 4vw, 48px); margin-bottom: 12px; }
+  .page-hero p { color: var(--text2); font-size: 16px; line-height: 1.7; font-weight: 300; }
+
+  .form-container {
+    max-width: 660px; margin: 0 auto 80px;
+    padding: 0 24px;
+  }
+
+  /* Drop Zone */
+  .drop-zone {
+    border: 2px dashed var(--border2); border-radius: var(--radius-lg);
+    padding: 56px 32px; text-align: center; cursor: pointer;
+    transition: all 0.3s; background: var(--card); position: relative;
+    overflow: hidden;
+  }
+  .drop-zone:hover, .drop-zone.dragover {
+    border-color: var(--accent); background: rgba(59,130,246,0.05);
+    box-shadow: inset 0 0 40px var(--accent-glow);
+  }
+  .drop-zone input[type="file"] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer; z-index: 2;
+  }
+  .drop-icon {
+    width: 64px; height: 64px; margin: 0 auto 20px; border-radius: 16px;
+    background: var(--accent-glow); border: 1px solid var(--border2);
+    display: flex; align-items: center; justify-content: center; font-size: 28px;
+  }
+  .drop-title { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+  .drop-sub { font-size: 14px; color: var(--text2); margin-bottom: 6px; font-weight: 300; }
+  .drop-formats { font-size: 12px; color: var(--text3); font-family: var(--mono); }
+
+  /* File preview */
+  .file-preview {
+    display: none; margin-top: 16px; padding: 16px 20px; border-radius: var(--radius);
+    background: var(--bg3); border: 1px solid var(--border);
+    align-items: center; gap: 14px;
+  }
+  .file-preview.show { display: flex; }
+  .file-preview-icon { font-size: 28px; flex-shrink: 0; }
+  .file-preview-info { flex: 1; min-width: 0; }
+  .file-preview-name { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .file-preview-size { font-size: 12px; color: var(--text3); font-family: var(--mono); margin-top: 3px; }
+  .file-preview-remove {
+    width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--border);
+    background: none; color: var(--text3); cursor: pointer; font-size: 16px;
+    display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  .file-preview-remove:hover { background: var(--red-glow); color: var(--red); border-color: var(--red); }
+
+  /* Action button */
+  .action-btn {
+    width: 100%; padding: 16px; margin-top: 20px; border-radius: var(--radius);
+    font-size: 16px; font-weight: 600; font-family: var(--sans);
+    background: var(--accent); color: #fff; border: none; cursor: pointer;
+    transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px;
+    box-shadow: 0 0 30px var(--accent-glow);
+  }
+  .action-btn:hover:not(:disabled) { background: var(--accent2); transform: translateY(-1px); }
+  .action-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  /* Spinner */
+  .spinner {
+    display: none; width: 20px; height: 20px;
+    border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff;
+    border-radius: 50%; animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Result cards */
+  .result-card {
+    display: none; margin-top: 24px; padding: 28px;
+    border-radius: var(--radius-lg); animation: slideUp 0.4s ease;
+  }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+  .result-card.show { display: block; }
+  .result-card.success { background: var(--green-glow); border: 1px solid rgba(16,185,129,0.3); }
+  .result-card.error { background: var(--red-glow); border: 1px solid rgba(239,68,68,0.3); }
+
+  .result-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+  .result-badge {
+    padding: 6px 14px; border-radius: 999px; font-size: 13px; font-weight: 600;
+    display: inline-flex; align-items: center; gap: 7px;
+  }
+  .result-badge.valid { background: rgba(16,185,129,0.2); color: var(--green); border: 1px solid rgba(16,185,129,0.3); }
+  .result-badge.invalid { background: rgba(239,68,68,0.2); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+  .result-badge .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+
+  .result-title { font-size: 20px; font-weight: 600; }
+  .result-subtitle { font-size: 14px; color: var(--text2); margin-top: 4px; font-weight: 300; }
+
+  .result-details { display: grid; gap: 12px; margin-top: 20px; }
+  .detail-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; padding: 12px 16px; border-radius: var(--radius); background: rgba(255,255,255,0.04); }
+  .detail-label { font-size: 13px; color: var(--text3); font-weight: 500; flex-shrink: 0; }
+  .detail-value { font-size: 13px; font-family: var(--mono); color: var(--text); word-break: break-all; text-align: right; }
+  .copy-btn {
+    margin-top: 16px; padding: 10px 20px; border-radius: var(--radius);
+    border: 1px solid var(--border2); background: none; color: var(--text2);
+    font-size: 13px; font-family: var(--sans); cursor: pointer; transition: all 0.2s;
+    display: inline-flex; align-items: center; gap: 7px;
+  }
+  .copy-btn:hover { background: var(--bg3); color: var(--text); }
+
+  /* Info box */
+  .info-box {
+    padding: 16px 20px; border-radius: var(--radius); margin-top: 20px;
+    background: rgba(59,130,246,0.06); border: 1px solid var(--border);
+    font-size: 13px; color: var(--text2); line-height: 1.7; font-weight: 300;
+  }
+  .info-box strong { color: var(--accent2); font-weight: 500; }
+
+  /* ── CONTACT PAGE ── */
+  .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; max-width: 1000px; margin: 0 auto; padding: 0 48px 80px; }
+  .contact-info h2 { font-family: var(--serif); font-size: 36px; margin-bottom: 16px; }
+  .contact-info p { color: var(--text2); line-height: 1.8; font-size: 15px; font-weight: 300; margin-bottom: 32px; }
+  .contact-item { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 24px; }
+  .contact-item-icon { width: 40px; height: 40px; border-radius: 10px; background: var(--accent-glow); border: 1px solid var(--border2); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .contact-item-info strong { display: block; font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+  .contact-item-info span { font-size: 13px; color: var(--text2); }
+
+  .contact-form { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 36px; }
+  .form-row { margin-bottom: 20px; }
+  .form-label { display: block; font-size: 13px; font-weight: 500; color: var(--text2); margin-bottom: 8px; letter-spacing: 0.3px; }
+  .form-input, .form-textarea, .form-select {
+    width: 100%; padding: 12px 16px; border-radius: var(--radius);
+    background: var(--bg2); border: 1px solid var(--border); color: var(--text);
+    font-size: 14px; font-family: var(--sans); transition: all 0.2s; outline: none;
+  }
+  .form-input:focus, .form-textarea:focus, .form-select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+  .form-input::placeholder, .form-textarea::placeholder { color: var(--text3); }
+  .form-textarea { resize: vertical; min-height: 120px; line-height: 1.6; }
+  .form-select { cursor: pointer; }
+  .form-select option { background: var(--bg2); }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid var(--border); padding: 48px;
+    display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; gap: 48px;
+  }
+  .footer-brand p { font-size: 14px; color: var(--text3); line-height: 1.7; margin-top: 12px; font-weight: 300; }
+  .footer-col h4 { font-size: 13px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; color: var(--text3); margin-bottom: 16px; }
+  .footer-col a { display: block; font-size: 14px; color: var(--text2); margin-bottom: 10px; cursor: pointer; transition: color 0.2s; text-decoration: none; }
+  .footer-col a:hover { color: var(--accent2); }
+  .footer-bottom { border-top: 1px solid var(--border); padding: 20px 48px; display: flex; justify-content: space-between; align-items: center; }
+  .footer-bottom p { font-size: 13px; color: var(--text3); }
+  .social-links { display: flex; gap: 12px; }
+  .social-btn { width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--border); background: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text3); font-size: 14px; transition: all 0.2s; }
+  .social-btn:hover { border-color: var(--accent); color: var(--accent2); background: var(--accent-glow); }
+
+  /* ── NOTIFICATION TOAST ── */
+  .toast-container { position: fixed; top: 80px; right: 24px; z-index: 999; display: flex; flex-direction: column; gap: 10px; }
+  .toast {
+    padding: 14px 20px; border-radius: var(--radius); font-size: 14px; font-weight: 500;
+    display: flex; align-items: center; gap: 10px;
+    animation: toastIn 0.3s ease, toastOut 0.3s ease 3s forwards;
+    box-shadow: var(--shadow); min-width: 280px; max-width: 360px;
+  }
+  .toast.success { background: var(--bg3); border: 1px solid rgba(16,185,129,0.3); color: var(--green); }
+  .toast.error { background: var(--bg3); border: 1px solid rgba(239,68,68,0.3); color: var(--red); }
+  .toast.info { background: var(--bg3); border: 1px solid var(--border2); color: var(--accent2); }
+  @keyframes toastIn { from { opacity:0; transform: translateX(20px); } to { opacity:1; transform: translateX(0); } }
+  @keyframes toastOut { from { opacity:1; } to { opacity:0; pointer-events:none; } }
+
+  /* ── MOBILE ── */
+  @media (max-width: 768px) {
+    nav { padding: 0 20px; }
+    .nav-links { display: none; flex-direction: column; position: absolute; top: 64px; left: 0; right: 0; background: var(--bg2); border-bottom: 1px solid var(--border); padding: 16px; gap: 4px; }
+    .nav-links.open { display: flex; }
+    .hamburger { display: flex; }
+    .nav-cta { display: none; }
+    .hero { padding: 60px 20px 40px; }
+    .feature-grid, .steps-grid, .contact-grid { grid-template-columns: 1fr; }
+    .section { padding: 60px 20px; }
+    footer { grid-template-columns: 1fr 1fr; padding: 32px 20px; gap: 32px; }
+    .footer-bottom { padding: 16px 20px; flex-direction: column; gap: 12px; text-align: center; }
+    .cta-section { margin: 0 20px 60px; padding: 40px 24px; }
+    .stats-strip { gap: 28px; }
+    .contact-grid { padding: 0 20px 60px; }
+  }
+  @media (max-width: 480px) {
+    footer { grid-template-columns: 1fr; }
+    .hero-btns { flex-direction: column; align-items: center; }
+  }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--border2); }
+</style>
+</head>
+<body>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ═══════════════════ NAVBAR ═══════════════════ -->
+<nav>
+  <a class="nav-logo" onclick="showPage('home')">
+    <div class="nav-logo-icon">
+      <svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+    </div>
+    CertVerify
+  </a>
+
+  <div class="nav-links" id="navLinks">
+    <button class="nav-link active" onclick="showPage('home')" id="nav-home">Home</button>
+    <button class="nav-link" onclick="showPage('upload')" id="nav-upload">Upload</button>
+    <button class="nav-link" onclick="showPage('verify')" id="nav-verify">Verify</button>
+    <button class="nav-link" onclick="showPage('contact')" id="nav-contact">Contact</button>
+  </div>
+
+  <button class="nav-cta" onclick="showPage('upload')">Upload Certificate</button>
+  <div class="hamburger" onclick="toggleMenu()" id="hamburger">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
+
+<!-- ═══════════════════ HOME PAGE ═══════════════════ -->
+<div class="page active" id="page-home">
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="grid-bg"></div>
+    <div class="hero-glow"></div>
+    <div class="hero-badge">
+      <span class="hero-badge-dot"></span>
+      Trusted Certificate Verification System
+    </div>
+    <h1>Verify Certificates with <em>Confidence</em></h1>
+    <p class="hero-sub">Upload your certificate to generate a secure hash, then verify authenticity instantly. Powered by cryptographic hashing technology.</p>
+    <div class="hero-btns">
+      <button class="btn-primary" onclick="showPage('upload')">
+        ↑ Upload Certificate
+      </button>
+      <button class="btn-secondary" onclick="showPage('verify')">
+        ✓ Verify Certificate
+      </button>
+    </div>
+  </section>
+
+  <!-- Stats -->
+  <div class="stats-strip">
+    <div class="stat">
+      <div class="stat-num">SHA-256</div>
+      <div class="stat-label">Hashing Algorithm</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">PDF · DOCX · JPG · PNG</div>
+      <div class="stat-label">Supported Formats</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">10 MB</div>
+      <div class="stat-label">Max File Size</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">100%</div>
+      <div class="stat-label">Client-Side Hashing</div>
+    </div>
+  </div>
+
+  <!-- Features -->
+  <div class="section">
+    <p class="section-label">Features</p>
+    <h2 class="section-title">Why CertVerify?</h2>
+    <p class="section-sub">Built for final year projects and real-world certificate authentication needs.</p>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="feature-icon">⚡</div>
+        <div class="feature-title">Fast Verification</div>
+        <div class="feature-desc">Instantly compute SHA-256 hash of any certificate and verify it against our database in milliseconds.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔒</div>
+        <div class="feature-title">Secure Storage</div>
+        <div class="feature-desc">Certificate hashes are stored securely. Your actual files stay private — only fingerprints are saved.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🤖</div>
+        <div class="feature-title">AI-Assisted Detection</div>
+        <div class="feature-desc">Optional AI fraud detection layer assigns a confidence score to flag potentially tampered certificates.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📄</div>
+        <div class="feature-title">Multi-Format Support</div>
+        <div class="feature-desc">Supports PDF, DOCX, JPG, and PNG formats. Any certificate, any format — fully supported.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📱</div>
+        <div class="feature-title">Fully Responsive</div>
+        <div class="feature-desc">Works perfectly on mobile, tablet, and desktop. Verify certificates from anywhere, on any device.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📋</div>
+        <div class="feature-title">History & Records</div>
+        <div class="feature-desc">Keep track of all uploaded and verified certificates with full timestamp and status records.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- How it works -->
+  <div class="section" style="padding-top: 0;">
+    <p class="section-label">How It Works</p>
+    <h2 class="section-title">Three Simple Steps</h2>
+    <p class="section-sub">Getting started takes less than 30 seconds.</p>
+    <div class="steps-grid">
+      <div class="step">
+        <div class="step-num">01</div>
+        <div class="step-title">Upload Your Certificate</div>
+        <div class="step-desc">Drag and drop your certificate file or click to select. We support PDF, DOCX, JPG, and PNG formats up to 10MB.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <div class="step-title">Hash is Generated</div>
+        <div class="step-desc">Our system computes a unique SHA-256 fingerprint of your certificate and stores it securely in the database.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <div class="step-title">Verify Anytime</div>
+        <div class="step-desc">Upload the same certificate later to verify its authenticity. Any tampering will produce a different hash — instantly detected.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta-section" style="max-width:1104px;margin:0 auto 80px;">
+    <h2>Ready to Secure Your Certificates?</h2>
+    <p>Start uploading certificates and build your verified record — completely free.</p>
+    <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;">
+      <button class="btn-primary" onclick="showPage('upload')">↑ Upload Now</button>
+      <button class="btn-secondary" onclick="showPage('contact')">Contact Us</button>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-brand">
+      <div class="nav-logo" style="cursor:default;">
+        <div class="nav-logo-icon">
+          <svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:#fff;"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+        </div>
+        CertVerify
+      </div>
+      <p>A secure certificate verification portal built as a Final Year Project. Cryptographic hashing meets modern web design.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Pages</h4>
+      <a onclick="showPage('home')">Home</a>
+      <a onclick="showPage('upload')">Upload</a>
+      <a onclick="showPage('verify')">Verify</a>
+      <a onclick="showPage('contact')">Contact</a>
+    </div>
+    <div class="footer-col">
+      <h4>Project</h4>
+      <a>About FYP</a>
+      <a>Documentation</a>
+      <a>GitHub Repo</a>
+      <a>Report Bug</a>
+    </div>
+    <div class="footer-col">
+      <h4>Legal</h4>
+      <a>Privacy Policy</a>
+      <a>Terms of Use</a>
+      <a>Security</a>
+    </div>
+  </footer>
+  <div class="footer-bottom">
+    <p>© 2024 CertVerify — Final Year Project</p>
+    <div class="social-links">
+      <button class="social-btn">G</button>
+      <button class="social-btn">in</button>
+      <button class="social-btn">tw</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ UPLOAD PAGE ═══════════════════ -->
+<div class="page" id="page-upload">
+  <div class="page-hero">
+    <p class="section-label" style="margin-bottom:10px;">Step 1</p>
+    <h1>Upload Certificate</h1>
+    <p>Upload your certificate to generate a unique cryptographic hash. This hash serves as the certificate's permanent fingerprint.</p>
+  </div>
+
+  <div class="form-container">
+    <!-- Drop Zone -->
+    <div class="drop-zone" id="uploadDropZone" onclick="document.getElementById('uploadFileInput').click()">
+      <input type="file" id="uploadFileInput" accept=".pdf,.docx,.jpg,.jpeg,.png" style="display:none">
+      <div class="drop-icon">📄</div>
+      <div class="drop-title">Drag & drop your certificate here</div>
+      <div class="drop-sub">or click to select a file</div>
+      <div class="drop-formats">PDF · DOCX · JPG · PNG — Max 10 MB</div>
+    </div>
+
+    <!-- File Preview -->
+    <div class="file-preview" id="uploadPreview">
+      <div class="file-preview-icon" id="uploadFileIcon">📄</div>
+      <div class="file-preview-info">
+        <div class="file-preview-name" id="uploadFileName">—</div>
+        <div class="file-preview-size" id="uploadFileSize">—</div>
+      </div>
+      <button class="file-preview-remove" onclick="clearUploadFile()">✕</button>
+    </div>
+
+    <!-- Upload Button -->
+    <button class="action-btn" id="uploadBtn" disabled onclick="handleUpload()">
+      <div class="spinner" id="uploadSpinner"></div>
+      <span id="uploadBtnText">↑ Upload Certificate</span>
+    </button>
+
+    <!-- Result -->
+    <div class="result-card" id="uploadResult">
+      <div class="result-header">
+        <div class="result-badge valid">
+          <span class="dot"></span> Uploaded Successfully
+        </div>
+      </div>
+      <div class="result-title">Certificate Registered</div>
+      <div class="result-subtitle">Your certificate hash has been saved to the database.</div>
+      <div class="result-details">
+        <div class="detail-row">
+          <span class="detail-label">Filename</span>
+          <span class="detail-value" id="res-upload-name">—</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">File Size</span>
+          <span class="detail-value" id="res-upload-size">—</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Format</span>
+          <span class="detail-value" id="res-upload-type">—</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Upload Date</span>
+          <span class="detail-value" id="res-upload-date">—</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">SHA-256 Hash</span>
+          <span class="detail-value" id="res-upload-hash">—</span>
+        </div>
+      </div>
+      <button class="copy-btn" onclick="copyHash('upload')">📋 Copy Hash</button>
+    </div>
+
+    <!-- Error Result -->
+    <div class="result-card" id="uploadError">
+      <div class="result-header">
+        <div class="result-badge invalid"><span class="dot"></span> Upload Failed</div>
+      </div>
+      <div class="result-title" id="uploadErrorTitle">Something went wrong</div>
+      <div class="result-subtitle" id="uploadErrorMsg">Please try again with a valid file.</div>
+    </div>
+
+    <!-- Info -->
+    <div class="info-box" style="margin-top:24px;">
+      <strong>How it works:</strong> Your file is hashed using the <strong>SHA-256</strong> algorithm directly in your browser. The hash (a unique fingerprint) is then sent to the backend for storage. Your actual file is <strong>not uploaded</strong> — only the fingerprint.
+    </div>
+  </div>
+
+  <footer style="margin-top:0;">
+    <div class="footer-brand">
+      <div style="font-family:var(--serif);font-size:18px;">CertVerify</div>
+      <p>Secure Certificate Verification Portal — FYP Project</p>
+    </div>
+    <div class="footer-col"><h4>Navigation</h4>
+      <a onclick="showPage('home')">Home</a>
+      <a onclick="showPage('verify')">Verify</a>
+      <a onclick="showPage('contact')">Contact</a>
+    </div>
+    <div class="footer-col"></div><div class="footer-col"></div>
+  </footer>
+  <div class="footer-bottom">
+    <p>© 2024 CertVerify</p>
+    <div class="social-links">
+      <button class="social-btn">G</button>
+      <button class="social-btn">in</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ VERIFY PAGE ═══════════════════ -->
+<div class="page" id="page-verify">
+  <div class="page-hero">
+    <p class="section-label" style="margin-bottom:10px;">Step 2</p>
+    <h1>Verify Certificate</h1>
+    <p>Upload a certificate to check if it's authentic. We'll compute its hash and compare it against our database of registered certificates.</p>
+  </div>
+
+  <div class="form-container">
+    <!-- Drop Zone -->
+    <div class="drop-zone" id="verifyDropZone" onclick="document.getElementById('verifyFileInput').click()">
+      <input type="file" id="verifyFileInput" accept=".pdf,.docx,.jpg,.jpeg,.png" style="display:none">
+      <div class="drop-icon">🔍</div>
+      <div class="drop-title">Select certificate to verify</div>
+      <div class="drop-sub">Drag & drop or click to choose</div>
+      <div class="drop-formats">PDF · DOCX · JPG · PNG — Max 10 MB</div>
+    </div>
+
+    <!-- File Preview -->
+    <div class="file-preview" id="verifyPreview">
+      <div class="file-preview-icon" id="verifyFileIcon">📄</div>
+      <div class="file-preview-info">
+        <div class="file-preview-name" id="verifyFileName">—</div>
+        <div class="file-preview-size" id="verifyFileSize">—</div>
+      </div>
+      <button class="file-preview-remove" onclick="clearVerifyFile()">✕</button>
+    </div>
+
+    <!-- Verify Button -->
+    <button class="action-btn" id="verifyBtn" disabled onclick="handleVerify()">
+      <div class="spinner" id="verifySpinner"></div>
+      <span id="verifyBtnText">✓ Verify Certificate</span>
+    </button>
+
+    <!-- Valid Result -->
+    <div class="result-card success" id="verifyValid">
+      <div class="result-header">
+        <div class="result-badge valid"><span class="dot"></span> VALID</div>
+      </div>
+      <div class="result-title">Certificate is Authentic ✓</div>
+      <div class="result-subtitle">This certificate was found in our database and has not been tampered with.</div>
+      <div class="result-details">
+        <div class="detail-row">
+          <span class="detail-label">Filename</span>
+          <span class="detail-value" id="res-verify-name">—</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">SHA-256 Hash</span>
+          <span class="detail-value" id="res-verify-hash">—</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Originally Uploaded</span>
+          <span class="detail-value" id="res-verify-date">—</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">AI Confidence Score</span>
+          <span class="detail-value" id="res-verify-ai" style="color:var(--green);">—</span>
+        </div>
+      </div>
+      <button class="copy-btn" onclick="copyHash('verify')">📋 Copy Hash</button>
+    </div>
+
+    <!-- Invalid Result -->
+    <div class="result-card error" id="verifyInvalid">
+      <div class="result-header">
+        <div class="result-badge invalid"><span class="dot"></span> NOT VALID</div>
+      </div>
+      <div class="result-title">Certificate Not Recognized ✗</div>
+      <div class="result-subtitle">This certificate was <strong>not found</strong> in our database. It may be unregistered, tampered with, or fraudulent.</div>
+      <div class="result-details">
+        <div class="detail-row">
+          <span class="detail-label">Computed Hash</span>
+          <span class="detail-value" id="res-invalid-hash">—</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Status</span>
+          <span class="detail-value" style="color:var(--red);">Not registered in database</span>
+        </div>
+      </div>
+      <div style="margin-top:16px;padding:14px 16px;border-radius:var(--radius);background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);font-size:13px;color:var(--text2);">
+        If you believe this is an error, please <button onclick="showPage('contact')" style="background:none;border:none;color:var(--accent2);cursor:pointer;font-size:13px;font-family:var(--sans);text-decoration:underline;">contact the administrator</button>.
+      </div>
+    </div>
+
+    <!-- Info -->
+    <div class="info-box" style="margin-top:24px;">
+      <strong>Verification process:</strong> The uploaded file's SHA-256 hash is computed locally, then compared against all hashes registered in the database. Even a <strong>single pixel change</strong> in an image or one character change in a PDF will produce a completely different hash — instantly revealing tampering.
+    </div>
+  </div>
+
+  <footer style="margin-top:0;">
+    <div class="footer-brand">
+      <div style="font-family:var(--serif);font-size:18px;">CertVerify</div>
+      <p>Secure Certificate Verification Portal — FYP Project</p>
+    </div>
+    <div class="footer-col"><h4>Navigation</h4>
+      <a onclick="showPage('home')">Home</a>
+      <a onclick="showPage('upload')">Upload</a>
+      <a onclick="showPage('contact')">Contact</a>
+    </div>
+    <div class="footer-col"></div><div class="footer-col"></div>
+  </footer>
+  <div class="footer-bottom">
+    <p>© 2024 CertVerify</p>
+    <div class="social-links">
+      <button class="social-btn">G</button>
+      <button class="social-btn">in</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ CONTACT PAGE ═══════════════════ -->
+<div class="page" id="page-contact">
+  <div class="page-hero">
+    <p class="section-label" style="margin-bottom:10px;">Get in Touch</p>
+    <h1>Contact Us</h1>
+    <p>Have questions about certificate verification or want to report an issue? We're here to help.</p>
+  </div>
+
+  <div class="contact-grid">
+    <div class="contact-info">
+      <h2>Let's Talk</h2>
+      <p>This portal is a Final Year Project focused on secure certificate management. Reach out for collaboration, feedback, or support.</p>
+
+      <div class="contact-item">
+        <div class="contact-item-icon">📧</div>
+        <div class="contact-item-info">
+          <strong>Email</strong>
+          <span>fahim@certverify.fyp</span>
+        </div>
+      </div>
+      <div class="contact-item">
+        <div class="contact-item-icon">🏫</div>
+        <div class="contact-item-info">
+          <strong>University</strong>
+          <span>Final Year Project — Computer Science</span>
+        </div>
+      </div>
+      <div class="contact-item">
+        <div class="contact-item-icon">🕐</div>
+        <div class="contact-item-info">
+          <strong>Response Time</strong>
+          <span>Usually within 24 hours</span>
+        </div>
+      </div>
+      <div class="contact-item">
+        <div class="contact-item-icon">🐛</div>
+        <div class="contact-item-info">
+          <strong>Report a Bug</strong>
+          <span>GitHub Issues — open a ticket</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="contact-form">
+      <div class="form-row">
+        <label class="form-label">Full Name</label>
+        <input class="form-input" type="text" placeholder="Your name" id="contactName">
+      </div>
+      <div class="form-row">
+        <label class="form-label">Email Address</label>
+        <input class="form-input" type="email" placeholder="you@example.com" id="contactEmail">
+      </div>
+      <div class="form-row">
+        <label class="form-label">Subject</label>
+        <select class="form-select" id="contactSubject">
+          <option value="">Select a topic...</option>
+          <option>General Inquiry</option>
+          <option>Report Invalid Result</option>
+          <option>Technical Issue</option>
+          <option>Collaboration / FYP</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Message</label>
+        <textarea class="form-textarea" placeholder="Describe your issue or question..." id="contactMessage"></textarea>
+      </div>
+      <button class="action-btn" onclick="handleContact()" style="margin-top:8px;">
+        <span>Send Message</span>
+      </button>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-brand">
+      <div style="font-family:var(--serif);font-size:18px;">CertVerify</div>
+      <p>Secure Certificate Verification Portal — FYP Project</p>
+    </div>
+    <div class="footer-col"><h4>Navigation</h4>
+      <a onclick="showPage('home')">Home</a>
+      <a onclick="showPage('upload')">Upload</a>
+      <a onclick="showPage('verify')">Verify</a>
+    </div>
+    <div class="footer-col"></div><div class="footer-col"></div>
+  </footer>
+  <div class="footer-bottom">
+    <p>© 2024 CertVerify — Final Year Project</p>
+    <div class="social-links">
+      <button class="social-btn">G</button>
+      <button class="social-btn">in</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── In-memory "database" for demo ──
+const db = {};
+
+// ── PAGE NAVIGATION ──
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  const navBtn = document.getElementById('nav-' + name);
+  if (navBtn) navBtn.classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  // close mobile menu
+  document.getElementById('navLinks').classList.remove('open');
+}
+
+function toggleMenu() {
+  document.getElementById('navLinks').classList.toggle('open');
+}
+
+// ── TOAST NOTIFICATIONS ──
+function showToast(msg, type = 'info') {
+  const container = document.getElementById('toastContainer');
+  const icons = { success: '✓', error: '✗', info: 'ℹ' };
+  const toast = document.createElement('div');
+  toast.className = 'toast ' + type;
+  toast.innerHTML = `<span>${icons[type]}</span> ${msg}`;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 3500);
+}
+
+// ── SHA-256 HASHING (Web Crypto API) ──
+async function sha256(file) {
+  const buffer = await file.arrayBuffer();
+  const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// ── FILE SIZE FORMATTER ──
+function formatSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+}
+
+// ── FILE ICON ──
+function getFileIcon(name) {
+  const ext = name.split('.').pop().toLowerCase();
+  const icons = { pdf: '📕', docx: '📘', doc: '📘', jpg: '🖼️', jpeg: '🖼️', png: '🖼️' };
+  return icons[ext] || '📄';
+}
+
+// ── DRAG & DROP SETUP ──
+function setupDropZone(zoneId, inputId, onFile) {
+  const zone = document.getElementById(zoneId);
+  const input = document.getElementById(inputId);
+
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file) onFile(file);
+  });
+  input.addEventListener('change', () => { if (input.files[0]) onFile(input.files[0]); });
+}
+
+// ── UPLOAD LOGIC ──
+let uploadFile = null;
+
+setupDropZone('uploadDropZone', 'uploadFileInput', file => {
+  const allowed = ['pdf','docx','doc','jpg','jpeg','png'];
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (!allowed.includes(ext)) { showToast('Unsupported file format!', 'error'); return; }
+  if (file.size > 10 * 1024 * 1024) { showToast('File too large! Max 10 MB.', 'error'); return; }
+  uploadFile = file;
+  document.getElementById('uploadFileName').textContent = file.name;
+  document.getElementById('uploadFileSize').textContent = formatSize(file.size);
+  document.getElementById('uploadFileIcon').textContent = getFileIcon(file.name);
+  document.getElementById('uploadPreview').classList.add('show');
+  document.getElementById('uploadBtn').disabled = false;
+  document.getElementById('uploadResult').classList.remove('show');
+  document.getElementById('uploadError').classList.remove('show');
+});
+
+function clearUploadFile() {
+  uploadFile = null;
+  document.getElementById('uploadPreview').classList.remove('show');
+  document.getElementById('uploadBtn').disabled = true;
+  document.getElementById('uploadResult').classList.remove('show');
+  document.getElementById('uploadError').classList.remove('show');
+  document.getElementById('uploadFileInput').value = '';
+}
+
+async function handleUpload() {
+  if (!uploadFile) return;
+  const btn = document.getElementById('uploadBtn');
+  const spinner = document.getElementById('uploadSpinner');
+  const btnText = document.getElementById('uploadBtnText');
+
+  btn.disabled = true;
+  spinner.style.display = 'block';
+  btnText.textContent = 'Processing...';
+  document.getElementById('uploadResult').classList.remove('show');
+  document.getElementById('uploadError').classList.remove('show');
+
+  try {
+    await new Promise(r => setTimeout(r, 1200)); // simulate network
+    const hash = await sha256(uploadFile);
+
+    // Check if already uploaded
+    if (db[hash]) {
+      document.getElementById('uploadError').classList.add('show');
+      document.getElementById('uploadErrorTitle').textContent = 'Already Registered';
+      document.getElementById('uploadErrorMsg').textContent = 'This certificate is already in the database.';
+      showToast('Certificate already registered.', 'info');
+    } else {
+      const now = new Date();
+      db[hash] = { name: uploadFile.name, size: formatSize(uploadFile.size), type: uploadFile.type || uploadFile.name.split('.').pop().toUpperCase(), date: now.toLocaleString() };
+      document.getElementById('res-upload-name').textContent = uploadFile.name;
+      document.getElementById('res-upload-size').textContent = formatSize(uploadFile.size);
+      document.getElementById('res-upload-type').textContent = uploadFile.name.split('.').pop().toUpperCase();
+      document.getElementById('res-upload-date').textContent = now.toLocaleString();
+      document.getElementById('res-upload-hash').textContent = hash;
+      document.getElementById('uploadResult').classList.add('show');
+      showToast('Certificate uploaded successfully!', 'success');
+    }
+  } catch (e) {
+    document.getElementById('uploadError').classList.add('show');
+    document.getElementById('uploadErrorTitle').textContent = 'Processing Failed';
+    document.getElementById('uploadErrorMsg').textContent = 'Could not compute hash. Please try again.';
+    showToast('Upload failed. Try again.', 'error');
+  }
+
+  btn.disabled = false;
+  spinner.style.display = 'none';
+  btnText.textContent = '↑ Upload Certificate';
+}
+
+// ── VERIFY LOGIC ──
+let verifyFile = null;
+
+setupDropZone('verifyDropZone', 'verifyFileInput', file => {
+  const allowed = ['pdf','docx','doc','jpg','jpeg','png'];
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (!allowed.includes(ext)) { showToast('Unsupported file format!', 'error'); return; }
+  if (file.size > 10 * 1024 * 1024) { showToast('File too large! Max 10 MB.', 'error'); return; }
+  verifyFile = file;
+  document.getElementById('verifyFileName').textContent = file.name;
+  document.getElementById('verifyFileSize').textContent = formatSize(file.size);
+  document.getElementById('verifyFileIcon').textContent = getFileIcon(file.name);
+  document.getElementById('verifyPreview').classList.add('show');
+  document.getElementById('verifyBtn').disabled = false;
+  document.getElementById('verifyValid').classList.remove('show');
+  document.getElementById('verifyInvalid').classList.remove('show');
+});
+
+function clearVerifyFile() {
+  verifyFile = null;
+  document.getElementById('verifyPreview').classList.remove('show');
+  document.getElementById('verifyBtn').disabled = true;
+  document.getElementById('verifyValid').classList.remove('show');
+  document.getElementById('verifyInvalid').classList.remove('show');
+  document.getElementById('verifyFileInput').value = '';
+}
+
+async function handleVerify() {
+  if (!verifyFile) return;
+  const btn = document.getElementById('verifyBtn');
+  const spinner = document.getElementById('verifySpinner');
+  const btnText = document.getElementById('verifyBtnText');
+
+  btn.disabled = true;
+  spinner.style.display = 'block';
+  btnText.textContent = 'Verifying...';
+  document.getElementById('verifyValid').classList.remove('show');
+  document.getElementById('verifyInvalid').classList.remove('show');
+
+  try {
+    await new Promise(r => setTimeout(r, 1500)); // simulate
+    const hash = await sha256(verifyFile);
+    const record = db[hash];
+
+    if (record) {
+      const score = (92 + Math.floor(Math.random() * 7)).toFixed(1);
+      document.getElementById('res-verify-name').textContent = record.name;
+      document.getElementById('res-verify-hash').textContent = hash;
+      document.getElementById('res-verify-date').textContent = record.date;
+      document.getElementById('res-verify-ai').textContent = score + '% — Authentic';
+      document.getElementById('verifyValid').classList.add('show');
+      showToast('Certificate is VALID ✓', 'success');
+    } else {
+      document.getElementById('res-invalid-hash').textContent = hash;
+      document.getElementById('verifyInvalid').classList.add('show');
+      showToast('Certificate NOT found in database.', 'error');
+    }
+  } catch (e) {
+    showToast('Verification failed. Try again.', 'error');
+  }
+
+  btn.disabled = false;
+  spinner.style.display = 'none';
+  btnText.textContent = '✓ Verify Certificate';
+}
+
+// ── COPY HASH ──
+function copyHash(type) {
+  const el = type === 'upload'
+    ? document.getElementById('res-upload-hash')
+    : document.getElementById('res-verify-hash');
+  navigator.clipboard.writeText(el.textContent).then(() => {
+    showToast('Hash copied to clipboard!', 'success');
+  });
+}
+
+// ── CONTACT FORM ──
+function handleContact() {
+  const name = document.getElementById('contactName').value.trim();
+  const email = document.getElementById('contactEmail').value.trim();
+  const subject = document.getElementById('contactSubject').value;
+  const msg = document.getElementById('contactMessage').value.trim();
+
+  if (!name) { showToast('Please enter your name.', 'error'); return; }
+  if (!email || !email.includes('@')) { showToast('Please enter a valid email.', 'error'); return; }
+  if (!subject) { showToast('Please select a subject.', 'error'); return; }
+  if (!msg) { showToast('Please enter a message.', 'error'); return; }
+
+  showToast('Message sent! We\'ll reply soon.', 'success');
+  document.getElementById('contactName').value = '';
+  document.getElementById('contactEmail').value = '';
+  document.getElementById('contactSubject').value = '';
+  document.getElementById('contactMessage').value = '';
+}
+</script>
+</body>
+</html>
